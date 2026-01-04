@@ -4,5 +4,5 @@ import tailwindcss from '@tailwindcss/vite'  // Add this import
 
 export default defineConfig({
   plugins: [react(), tailwindcss()],  // Add tailwindcss() here
-  base: '/muba-portfolio/',
+  base: '/muba-portfolio26/',
 })

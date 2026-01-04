@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, memo } from "react";
 import {
   Github,
   Linkedin,
@@ -8,12 +8,6 @@ import {
   Terminal,
   Cpu,
   Globe,
-  Award,
-  Database,
-  Layers,
-  Search,
-  Zap,
-  Star,
   FileBadge,
   BookOpen,
   Briefcase,
@@ -23,65 +17,233 @@ import {
   Phone,
   MapPin,
   MessageSquare,
+  Zap,
+  Database,
+  Layers,
+  Search,
 } from "lucide-react";
 
-// --- Space Theme Background ---
-const SpaceBackground = () => (
-  <div className="fixed inset-0 -z-10 overflow-hidden bg-[radial-gradient(ellipse_at_bottom,_#0F172A_0%,_#020617_100%)]">
-    <div className="absolute inset-0 opacity-20">
-      {[...Array(450)].map((_, i) => (
-        <div
-          key={i}
-          className="absolute bg-white rounded-full animate-pulse"
-          style={{
-            width: Math.random() * 2 + "px",
-            height: Math.random() * 2 + "px",
-            top: Math.random() * 100 + "%",
-            left: Math.random() * 100 + "%",
-            animationDuration: Math.random() * 3 + 2 + "s",
-          }}
-        />
-      ))}
+// --- Optimized Space Background (Highly Performant) ---
+const SpaceBackground = memo(() => {
+  const [isMobile, setIsMobile] = useState(false);
+  const [reducedMotion, setReducedMotion] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    const mediaQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
+    setReducedMotion(mediaQuery.matches);
+    checkMobile();
+
+    window.addEventListener("resize", checkMobile);
+    mediaQuery.addEventListener("change", (e) => setReducedMotion(e.matches));
+
+    return () => {
+      window.removeEventListener("resize", checkMobile);
+      mediaQuery.removeEventListener("change", (e) =>
+        setReducedMotion(e.matches)
+      );
+    };
+  }, []);
+
+  const shootingStars = isMobile ? 5 : 12;
+
+  return (
+    <div className="fixed inset-0 -z-10 overflow-hidden bg-[radial-gradient(ellipse_at_bottom,_#0F172A_0%,_#020617_100%)]">
+      {/* Twinkling stars using CSS layers (no DOM bloat) */}
+      <div
+        className={`stars-layer ${isMobile ? "mobile" : "desktop"} ${
+          reducedMotion ? "no-twinkle" : ""
+        }`}
+      />
+
+      {/* Shooting stars - only if motion allowed */}
+      {!reducedMotion && (
+        <div className="night">
+          {[...Array(shootingStars)].map((_, i) => (
+            <div key={i} className={`shooting_star delay-${(i % 8) + 1}`} />
+          ))}
+        </div>
+      )}
+
+      <style jsx>{`
+        .stars-layer {
+          position: absolute;
+          inset: 0;
+          background: transparent;
+        }
+        .stars-layer::before,
+        .stars-layer::after {
+          content: "";
+          position: absolute;
+          inset: 0;
+          background-repeat: repeat;
+          animation: twinkle 12s ease-in-out infinite;
+        }
+
+        /* Mobile: fewer, smaller stars */
+        .mobile::before {
+          background-image: radial-gradient(
+              1px 1px at 20px 30px,
+              #fff,
+              transparent
+            ),
+            radial-gradient(1px 1px at 80px 100px, #eee, transparent),
+            radial-gradient(1px 1px at 140px 60px, #fff, transparent),
+            radial-gradient(1px 1px at 50px 120px, #ddd, transparent);
+          background-size: 250px 250px;
+        }
+        .mobile::after {
+          background-image: radial-gradient(
+              1px 1px at 110px 40px,
+              #fff,
+              transparent
+            ),
+            radial-gradient(1px 1px at 160px 90px, #eee, transparent);
+          background-size: 300px 300px;
+          animation-direction: reverse;
+          animation-duration: 18s;
+        }
+
+        /* Desktop: more stars */
+        .desktop::before {
+          background-image: radial-gradient(
+              2px 2px at 20px 30px,
+              #eee,
+              transparent
+            ),
+            radial-gradient(2px 2px at 40px 70px, #fff, transparent),
+            radial-gradient(1px 1px at 90px 40px, #fff, transparent),
+            radial-gradient(2px 2px at 130px 80px, #eee, transparent),
+            radial-gradient(1px 1px at 160px 120px, #fff, transparent),
+            radial-gradient(1px 1px at 70px 100px, #ddd, transparent);
+          background-size: 220px 220px;
+        }
+        .desktop::after {
+          background-image: radial-gradient(
+              1px 1px at 50px 100px,
+              #fff,
+              transparent
+            ),
+            radial-gradient(2px 2px at 120px 20px, #eee, transparent),
+            radial-gradient(1px 1px at 80px 140px, #fff, transparent);
+          background-size: 350px 350px;
+          animation-direction: reverse;
+          animation-duration: 15s;
+        }
+
+        @keyframes twinkle {
+          0%,
+          100% {
+            opacity: 0.4;
+          }
+          50% {
+            opacity: 1;
+          }
+        }
+
+        .no-twinkle::before,
+        .no-twinkle::after {
+          animation: none;
+          opacity: 0.6;
+        }
+
+        .night {
+          position: absolute;
+          width: 200%;
+          height: 200%;
+          transform: rotateZ(45deg);
+        }
+
+        .shooting_star {
+          position: absolute;
+          left: 50%;
+          top: 50%;
+          height: 2px;
+          background: linear-gradient(-45deg, #5f91ff, rgba(0, 0, 255, 0));
+          border-radius: 999px;
+          filter: drop-shadow(0 0 6px #699bff);
+          animation: tail 3000ms ease-in-out infinite,
+            shooting 3000ms ease-in-out infinite;
+        }
+
+        @keyframes tail {
+          0% {
+            width: 0;
+          }
+          30% {
+            width: 100px;
+          }
+          100% {
+            width: 0;
+          }
+        }
+
+        @keyframes shooting {
+          0% {
+            transform: translateX(0);
+          }
+          100% {
+            transform: translateX(300px);
+          }
+        }
+
+        /* Delays for natural feel */
+        .delay-1 {
+          animation-delay: 0s;
+        }
+        .delay-2 {
+          animation-delay: 1s;
+        }
+        .delay-3 {
+          animation-delay: 2.2s;
+        }
+        .delay-4 {
+          animation-delay: 0.8s;
+        }
+        .delay-5 {
+          animation-delay: 3s;
+        }
+        .delay-6 {
+          animation-delay: 1.8s;
+        }
+        .delay-7 {
+          animation-delay: 2.8s;
+        }
+        .delay-8 {
+          animation-delay: 0.5s;
+        }
+      `}</style>
     </div>
-    <div className="night">
-      {[...Array(15)].map((_, i) => (
-        <div key={i} className="shooting_star" />
-      ))}
-    </div>
-    <style>{`
-      .night { position: relative; width: 100%; height: 100%; transform: rotateZ(45deg); }
-      .shooting_star {
-        position: absolute; left: 50%; top: 50%; height: 2px;
-        background: linear-gradient(-45deg, #5f91ff, rgba(0, 0, 255, 0));
-        border-radius: 999px; filter: drop-shadow(0 0 6px #699bff);
-        animation: tail 3000ms ease-in-out infinite, shooting 3000ms ease-in-out infinite;
-      }
-      @keyframes tail { 0% { width: 0; } 30% { width: 100px; } 100% { width: 0; } }
-      @keyframes shooting { 0% { transform: translateX(0); } 100% { transform: translateX(300px); } }
-      .shooting_star:nth-child(1) { top: 15%; left: 10%; animation-delay: 500ms; }
-      .shooting_star:nth-child(2) { top: 40%; left: 60%; animation-delay: 1200ms; }
-      .shooting_star:nth-child(3) { top: 70%; left: 20%; animation-delay: 2500ms; }
-      .shooting_star:nth-child(4) { top: 25%; left: 80%; animation-delay: 1800ms; }
-      .shooting_star:nth-child(5) { top: 55%; left: 30%; animation-delay: 3000ms; }
-      .shooting_star:nth-child(6) { top: 80%; left: 70%; animation-delay: 800ms; }
-      .shooting_star:nth-child(7) { top: 10%; left: 45%; animation-delay: 2200ms; }
-      .shooting_star:nth-child(8) { top: 65%; left: 15%; animation-delay: 1400ms; }
-    `}</style>
-  </div>
-);
+  );
+});
 
 const App = () => {
   const [view, setView] = useState("home");
   const [isTransitioning, setIsTransitioning] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+  const [reducedMotion, setReducedMotion] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    const mediaQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
+    setReducedMotion(mediaQuery.matches);
+    checkMobile();
+
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
 
   const changeView = (newView) => {
     if (newView === view) return;
     setIsTransitioning(true);
-    setTimeout(() => {
-      setView(newView);
-      window.scrollTo(0, 0);
-      setIsTransitioning(false);
-    }, 400);
+    setTimeout(
+      () => {
+        setView(newView);
+        window.scrollTo(0, 0);
+        setIsTransitioning(false);
+      },
+      reducedMotion ? 0 : 400
+    );
   };
 
   const navItems = [
@@ -257,64 +419,30 @@ const App = () => {
     <div className="min-h-screen text-slate-200 font-sans selection:bg-blue-500/30 overflow-x-hidden">
       <SpaceBackground />
 
-      {/* --- Satellite Navigation --- */}
-      <header
-        className="
-    fixed top-3 sm:top-6 left-1/2 -translate-x-1/2 z-50
-    flex items-center
-    px-2 sm:px-4 py-2 sm:py-3
-    bg-slate-900/50 backdrop-blur-3xl
-    border border-white/10
-    rounded-full shadow-2xl
-    max-w-[calc(100%-1rem)] sm:max-w-none
-  "
-      >
-        {/* Scroll container */}
-        <nav
-          className="
-    flex items-center gap-1 sm:gap-2
-    overflow-x-auto
-    whitespace-nowrap
-    no-scrollbar
-    sm:overflow-visible
-  "
-        >
+      {/* Navigation */}
+      <header className="fixed top-3 sm:top-6 left-1/2 -translate-x-1/2 z-50 flex items-center px-2 sm:px-4 py-2 sm:py-3 bg-slate-900/80 backdrop-blur-md border border-white/10 rounded-full shadow-2xl max-w-[calc(100%-1rem)] sm:max-w-none">
+        <nav className="flex items-center gap-1 sm:gap-2 overflow-x-auto whitespace-nowrap no-scrollbar sm:overflow-visible">
           {navItems.map((item) => (
             <button
               key={item.id}
               onClick={() => changeView(item.id)}
               className={`
-          relative group
-          flex items-center justify-center
-          gap-1.5 sm:gap-2
-          px-3 sm:px-4
-          py-2 sm:py-2.5
-          rounded-full
-          text-xs sm:text-sm
-          transition-all duration-300
-          shrink-0
-          ${
-            view === item.id
-              ? "bg-blue-600 text-white"
-              : "text-slate-400 hover:text-white hover:bg-white/10"
-          }
-        `}
+                relative group flex items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 sm:py-2.5 rounded-full text-xs sm:text-sm transition-all duration-300 shrink-0
+                ${
+                  view === item.id
+                    ? "bg-blue-600 text-white"
+                    : "text-slate-400 hover:text-white hover:bg-white/10"
+                }
+                ${reducedMotion || isMobile ? "" : "hover:scale-105"}
+              `}
             >
-              {/* Icon */}
               <span className="text-base sm:text-lg">{item.icon}</span>
-
-              {/* Label */}
               <span
-                className={`
-            font-black uppercase tracking-widest
-            transition-all duration-300
-            overflow-hidden
-            ${
-              view === item.id
-                ? "max-w-[120px] opacity-100 ml-1.5"
-                : "max-w-0 opacity-0"
-            }
-          `}
+                className={`font-black uppercase tracking-widest transition-all duration-300 overflow-hidden ${
+                  view === item.id
+                    ? "max-w-[120px] opacity-100 ml-1.5"
+                    : "max-w-0 opacity-0"
+                }`}
               >
                 {item.label}
               </span>
@@ -323,16 +451,14 @@ const App = () => {
         </nav>
       </header>
 
-      {/* --- Content Area --- */}
+      {/* Main Content */}
       <main
-        className={`max-w-7xl mx-auto px-6 pt-32 pb-20 transition-all duration-500 sm:pt-40 ${
-          isTransitioning
-            ? "opacity-0 scale-95 blur-md"
-            : "opacity-100 scale-100 blur-0"
+        className={`max-w-7xl mx-auto px-6 pt-32 pb-20 sm:pt-40 transition-all duration-500 ${
+          isTransitioning ? "opacity-0 scale-95" : "opacity-100 scale-100"
         }`}
       >
         {view === "home" && (
-          <div className="min-h-[70vh] flex flex-col justify-center animate-in fade-in slide-in-from-bottom-10 duration-700">
+          <div className="min-h-[70vh] flex flex-col justify-center">
             <div className="flex items-center gap-3 mb-6">
               <span className="w-12 h-px bg-blue-500"></span>
               <span className="text-blue-400 text-xs font-black uppercase tracking-[0.4em]">
@@ -381,7 +507,7 @@ const App = () => {
         )}
 
         {view === "about" && (
-          <div className="animate-in fade-in slide-in-from-right-10 duration-700">
+          <div>
             <h2 className="text-5xl font-black text-white mb-12 tracking-tighter sm:text-6xl lg:text-7xl">
               THE ARCHITECT
             </h2>
@@ -459,7 +585,7 @@ const App = () => {
         )}
 
         {view === "experience" && (
-          <div className="animate-in fade-in slide-in-from-left-10 duration-700 max-w-5xl mx-auto">
+          <div className="max-w-5xl mx-auto">
             <h2 className="text-5xl font-black text-white mb-12 tracking-tighter sm:text-6xl">
               EXPERIENCE
             </h2>
@@ -469,7 +595,7 @@ const App = () => {
                   key={i}
                   className="relative pl-10 border-l border-white/10 group sm:pl-12"
                 >
-                  <div className="absolute top-0 left-[-6px] w-3 h-3 bg-blue-500 rounded-full group-hover:scale-150 transition-transform shadow-[0_0_15px_rgba(59,130,246,0.5)] sm:left-[-8px] sm:w-4 sm:h-4"></div>
+                  <div className="absolute top-0 left-[-6px] w-3 h-3 bg-blue-500 rounded-full group-hover:scale-150 transition-transform sm:left-[-8px] sm:w-4 sm:h-4"></div>
                   <div className="text-blue-400 text-xs font-black tracking-widest uppercase mb-2">
                     {exp.period}
                   </div>
@@ -500,7 +626,7 @@ const App = () => {
         )}
 
         {view === "projects" && (
-          <div className="animate-in fade-in zoom-in duration-700">
+          <div>
             <h2 className="text-5xl font-black text-white mb-12 tracking-tighter sm:text-6xl">
               MY PROJECTS
             </h2>
@@ -547,7 +673,7 @@ const App = () => {
         )}
 
         {view === "skills" && (
-          <div className="animate-in fade-in slide-in-from-top-10 duration-700">
+          <div>
             <h2 className="text-5xl font-black text-white mb-12 tracking-tighter sm:text-6xl">
               MY SKILLS
             </h2>
@@ -570,7 +696,7 @@ const App = () => {
         )}
 
         {view === "contact" && (
-          <div className="animate-in fade-in slide-in-from-bottom-10 duration-700">
+          <div>
             <h2 className="text-5xl font-black text-white mb-12 tracking-tighter uppercase sm:text-6xl">
               CONTACT ME
             </h2>
@@ -622,7 +748,7 @@ const App = () => {
         )}
       </main>
 
-      {/* --- Footer --- */}
+      {/* Footer */}
       <footer className="max-w-7xl mx-auto px-6 py-16 border-t border-white/5">
         <div className="flex flex-col items-center text-center gap-6 sm:flex-row sm:justify-between">
           <div>
@@ -630,7 +756,7 @@ const App = () => {
               MUBA KHAN
             </h4>
             <p className="text-[10px] font-black uppercase tracking-[0.5em] text-slate-600 italic">
-              Lucknow &bull; 2025 Station
+              Lucknow • 2026 Station
             </p>
           </div>
           <div className="flex flex-wrap justify-center gap-8 sm:gap-10">
